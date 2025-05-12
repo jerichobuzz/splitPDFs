@@ -5,7 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 const app = express();
 const upload = multer();
 
-app.post('/split', upload.single('pdf'), async (req, res) => {
+app.post('/split', upload.single('data'), async (req, res) => {
   try {
     const originalPdf = await PDFDocument.load(req.file.buffer);
     const totalPages = originalPdf.getPageCount();
