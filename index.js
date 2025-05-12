@@ -5,8 +5,18 @@ import { PDFDocument } from 'pdf-lib';
 const app = express();
 const upload = multer();
 
+// ✅ Add this to parse form-data correctly
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // just in case
+
+// ✅ Use the exact field name 'data' from n8n
 app.post('/split', upload.single('data'), async (req, res) => {
   try {
+    console.log('Received file:', req.file);
+    if (!req.file) {
+      return res.status(400).send('No file received');
+    }
+
     const originalPdf = await PDFDocument.load(req.file.buffer);
     const totalPages = originalPdf.getPageCount();
     const chunks = [];
