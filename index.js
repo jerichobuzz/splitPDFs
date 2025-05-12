@@ -3,16 +3,14 @@ import multer from 'multer';
 import { PDFDocument } from 'pdf-lib';
 
 const app = express();
-const upload = multer();
+const upload = multer(); // uses memory storage by default
 
-// ✅ Add this to parse form-data correctly
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // just in case
-
-// ✅ Use the exact field name 'data' from n8n
 app.post('/split', upload.single('data'), async (req, res) => {
   try {
-    console.log('Received file:', req.file);
+    // Debug log to confirm the upload
+    console.log('Received Content-Type:', req.headers['content-type']);
+    console.log('Received file:', req.file?.originalname);
+
     if (!req.file) {
       return res.status(400).send('No file received');
     }
@@ -23,7 +21,10 @@ app.post('/split', upload.single('data'), async (req, res) => {
 
     for (let i = 0; i < totalPages; i += 25) {
       const chunkDoc = await PDFDocument.create();
-      const pageIndices = Array.from({ length: Math.min(25, totalPages - i) }, (_, j) => i + j);
+      const pageIndices = Array.from(
+        { length: Math.min(25, totalPages - i) },
+        (_, j) => i + j
+      );
       const pages = await chunkDoc.copyPages(originalPdf, pageIndices);
       pages.forEach(p => chunkDoc.addPage(p));
 
@@ -38,9 +39,13 @@ app.post('/split', upload.single('data'), async (req, res) => {
 
     res.json({ chunks });
   } catch (err) {
-    console.error(err);
+    console.error('Error splitting PDF:', err);
     res.status(500).send('Failed to split PDF');
   }
+});
+
+app.get('/', (_, res) => {
+  res.send('PDF Split API is running');
 });
 
 app.listen(3000, () => {
